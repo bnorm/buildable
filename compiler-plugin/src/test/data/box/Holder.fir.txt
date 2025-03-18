@@ -1,0 +1,28 @@
+FILE: Holder.kt
+    public final fun box(): R|kotlin/String| {
+        lval holder: R|Holder<kotlin/String>| = Q|Holder|.R|/Holder.Builder|<R|kotlin/String|>().R|kotlin/apply|<R|Holder.Builder<kotlin/String>|>(<L> = apply@fun R|Holder.Builder<kotlin/String>|.<anonymous>(): R|kotlin/Unit| <inline=Inline, kind=EXACTLY_ONCE>  {
+            this@R|special/anonymous|.R|SubstitutionOverride</Holder.Builder.value: R|kotlin/String|>| = String(OK)
+        }
+        ).R|SubstitutionOverride</Holder.Builder.build: R|Holder<kotlin/String>|>|()
+        ^box R|<local>/holder|.R|SubstitutionOverride</Holder.value: R|kotlin/String|>|
+    }
+    public final class Holder<out T : R|kotlin/Any|> : R|kotlin/Any| {
+        @R|dev/bnorm/buildable/Buildable|() public constructor<out T : R|kotlin/Any|>(value: R|T|): R|Holder<T>| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final val value: R|T| = R|<local>/value|
+            public get(): R|T|
+
+        public final class Builder<T : R|kotlin/Any|> : R|kotlin/Any| {
+            public final var value: R|T|
+                public get(): R|T|
+                public set(value: R|T|): R|kotlin/Unit|
+
+            public final fun build(): R|Holder<T>|
+
+            public constructor<T : R|kotlin/Any|>(): R|Holder.Builder<T>|
+
+        }
+
+    }
