@@ -11,8 +11,7 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 //@sample-start:BuildableCompilerPluginRegistrar
 @OptIn(ExperimentalCompilerApi::class)
 class BuildableCompilerPluginRegistrar : CompilerPluginRegistrar() {
-  override val supportsK2: Boolean
-    get() = true
+   override val supportsK2: Boolean get() = true
 
   override fun ExtensionStorage.registerExtensions(
     configuration: CompilerConfiguration,

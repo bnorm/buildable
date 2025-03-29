@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="runtime-js">
-    <output-path>$PROJECT_DIR$/runtime/build/libs</output-path>
-    <root id="archive" name="runtime-js.jar">
-      <element id="module-output" name="buildable.runtime.jsMain" />
-    </root>
-  </artifact>
-</component>

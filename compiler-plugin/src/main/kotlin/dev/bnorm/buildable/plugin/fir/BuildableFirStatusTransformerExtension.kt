@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.copy
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.extensions.FirStatusTransformerExtension
-import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
@@ -40,7 +40,6 @@ class BuildableFirStatusTransformerExtension(
   }
   //@sample-end
 
-
   //@sample-start:transformStatus
   override fun transformStatus(
     status: FirDeclarationStatus,
@@ -49,6 +48,8 @@ class BuildableFirStatusTransformerExtension(
     isLocal: Boolean
   ): FirDeclarationStatus {
     constructor.originalVisibility = status.visibility
+      // If constructor visibility is unknown (i.e., unspecified), use the class visibility.
+      .takeIf { it != Visibilities.Unknown } ?: containingClass!!.visibility
     return when (status.visibility) {
       Visibilities.Private -> status
       else -> status.copy(visibility = Visibilities.Private)

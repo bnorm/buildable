@@ -7,7 +7,7 @@ FILE: Holder.kt
         ^box R|<local>/holder|.R|SubstitutionOverride</Holder.value: R|kotlin/String|>|
     }
     public final class Holder<out T : R|kotlin/Any|> : R|kotlin/Any| {
-        @R|dev/bnorm/buildable/Buildable|() public constructor<out T : R|kotlin/Any|>(value: R|T|): R|Holder<T>| {
+        @R|dev/bnorm/buildable/Buildable|() private constructor<out T : R|kotlin/Any|>(value: R|T|): R|Holder<T>| {
             super<R|kotlin/Any|>()
         }
 

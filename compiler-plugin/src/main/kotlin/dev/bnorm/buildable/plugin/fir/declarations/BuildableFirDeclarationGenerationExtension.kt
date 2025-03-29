@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 
 //@sample-start:BuildableFirDeclarationGenerationExtension
 class BuildableFirDeclarationGenerationExtension(
-    session: FirSession,
+  session: FirSession,
 ) : FirDeclarationGenerationExtension(session) {
   companion object {
     //@sample-start:ANNOTATION_PREDICATE
@@ -56,8 +56,8 @@ class BuildableFirDeclarationGenerationExtension(
 
   //@sample-start:getNestedClassifiersNames
   override fun getNestedClassifiersNames(
-      classSymbol: FirClassSymbol<*>,
-      context: NestedClassGenerationContext,
+    classSymbol: FirClassSymbol<*>,
+    context: NestedClassGenerationContext,
   ): Set<Name> {
     if (classSymbol.classId !in classIds) return emptySet()
 
@@ -82,8 +82,8 @@ class BuildableFirDeclarationGenerationExtension(
 
   //@sample-start:getCallableNamesForClass
   override fun getCallableNamesForClass(
-      classSymbol: FirClassSymbol<*>,
-      context: MemberGenerationContext,
+    classSymbol: FirClassSymbol<*>,
+    context: MemberGenerationContext,
   ): Set<Name> {
     val constructorSymbol = builderClassIds[classSymbol.classId]
       ?: return emptySet()
@@ -98,7 +98,7 @@ class BuildableFirDeclarationGenerationExtension(
 
   //@sample-start:generateConstructors
   override fun generateConstructors(
-      context: MemberGenerationContext,
+    context: MemberGenerationContext,
   ): List<FirConstructorSymbol> {
     val classSymbol = context.owner
     if (classSymbol.classId !in builderClassIds) return emptyList()
@@ -111,8 +111,8 @@ class BuildableFirDeclarationGenerationExtension(
 
   //@sample-start:generateProperties
   override fun generateProperties(
-      callableId: CallableId,
-      context: MemberGenerationContext?,
+    callableId: CallableId,
+    context: MemberGenerationContext?,
   ): List<FirPropertySymbol> {
     val classSymbol = context?.owner ?: return emptyList()
     val constructorSymbol = builderClassIds[classSymbol.classId]
@@ -130,8 +130,8 @@ class BuildableFirDeclarationGenerationExtension(
 
   //@sample-start:generateFunctions
   override fun generateFunctions(
-      callableId: CallableId,
-      context: MemberGenerationContext?,
+    callableId: CallableId,
+    context: MemberGenerationContext?,
   ): List<FirNamedFunctionSymbol> {
     if (callableId.callableName != BuildableNames.BUILD_FUN_NAME)
       return emptyList()

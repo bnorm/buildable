@@ -3,7 +3,7 @@ FILE: Person.kt
         ^box String(OK)
     }
     public final class Person : R|kotlin/Any| {
-        @R|dev/bnorm/buildable/Buildable|() public constructor(name: R|kotlin/String|, nickname: R|kotlin/String?| = R|<local>/name|, age: R|kotlin/Int| = Int(0)): R|Person| {
+        @R|dev/bnorm/buildable/Buildable|() private constructor(name: R|kotlin/String|, nickname: R|kotlin/String?| = R|<local>/name|, age: R|kotlin/Int| = Int(0)): R|Person| {
             super<R|kotlin/Any|>()
         }
 
