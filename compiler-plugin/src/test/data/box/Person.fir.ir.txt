@@ -110,7 +110,7 @@ FILE fqName:<root> fileName:/Person.kt
                   if: CONST Boolean type=kotlin.Boolean value=true
                   then: CONST Int type=kotlin.Int value=0
           RETURN type=kotlin.Nothing from='public final fun build (): <root>.Person declared in <root>.Person.Builder'
-            CONSTRUCTOR_CALL 'private constructor <init> (name: kotlin.String, nickname: kotlin.String?, age: kotlin.Int) declared in <root>.Person' type=<root>.Person origin=null
+            CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, nickname: kotlin.String?, age: kotlin.Int) declared in <root>.Person' type=<root>.Person origin=null
               name: GET_VAR 'val tmp_0: kotlin.String declared in <root>.Person.Builder.build' type=kotlin.String origin=null
               nickname: GET_VAR 'val tmp_1: kotlin.String? declared in <root>.Person.Builder.build' type=kotlin.String? origin=null
               age: GET_VAR 'val tmp_2: kotlin.Int declared in <root>.Person.Builder.build' type=kotlin.Int origin=null
@@ -198,7 +198,7 @@ FILE fqName:<root> fileName:/Person.kt
             SET_FIELD 'FIELD GENERATED[dev.bnorm.buildable.plugin.BuildableKey] name:nickname$BuildableFlag type:kotlin.Boolean visibility:private declared in <root>.Person.Builder' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: <root>.Person.Builder declared in <root>.Person.Builder.<set-nickname>' type=<root>.Person.Builder origin=null
               value: CONST Boolean type=kotlin.Boolean value=true
-    CONSTRUCTOR visibility:private <> (name:kotlin.String, nickname:kotlin.String?, age:kotlin.Int) returnType:<root>.Person [primary]
+    CONSTRUCTOR visibility:public <> (name:kotlin.String, nickname:kotlin.String?, age:kotlin.Int) returnType:<root>.Person [primary]
       annotations:
         Buildable
       VALUE_PARAMETER name:name index:0 type:kotlin.String

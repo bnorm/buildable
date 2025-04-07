@@ -1,22 +1,22 @@
-package dev.bnorm.buildable.plugin.fir.checkers
+package dev.bnorm.buildable.plugin.fir
 
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies
 import org.jetbrains.kotlin.diagnostics.error0
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.RootDiagnosticRendererFactory
-import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtAnnotation
 
 //@sample-start:BuildableErrors
 object BuildableErrors : BaseDiagnosticRendererFactory() {
-  val BUILDABLE_PRIVATE_CONSTRUCTOR by error0<KtConstructor<*>>(
-    positioningStrategy = SourceElementPositioningStrategies.VISIBILITY_MODIFIER,
+  val BUILDABLE_MULTIPLE_CONSTRUCTORS by error0<KtAnnotation>(
+    positioningStrategy = SourceElementPositioningStrategies.DEFAULT,
   )
 
   override val MAP = KtDiagnosticFactoryToRendererMap("Buildable").apply {
     put(
-      BUILDABLE_PRIVATE_CONSTRUCTOR,
-      "'@Buildable' cannot be applied to a private constructor."
+      BUILDABLE_MULTIPLE_CONSTRUCTORS,
+      "'@Buildable' cannot be applied to multiple constructors in the same class."
     )
   }
 

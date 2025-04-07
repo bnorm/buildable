@@ -2,6 +2,7 @@ package dev.bnorm.buildable.plugin.fir
 
 import dev.bnorm.buildable.plugin.BuildableKey
 import dev.bnorm.buildable.plugin.BuildableNames
+import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
@@ -86,8 +87,9 @@ class BuildableFirDeclarationGenerationExtension(
       name = BuildableNames.BUILDER_CLASS_NAME,
       key = BuildableKey
     ) {
-      visibility = constructorSymbol.originalVisibility
-        ?: constructorSymbol.visibility
+      visibility = constructorSymbol.visibility
+        .takeIf { it != Visibilities.Unknown }
+        ?: owner.visibility
     }
 
     return builderClass.symbol

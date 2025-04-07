@@ -19,4 +19,10 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
   public void testAllFilesPresentInDiagnostic() {
     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler-plugin/src/test/data/diagnostic"), Pattern.compile("^(.+)\\.kt$"), null, true);
   }
+
+  @Test
+  @TestMetadata("Person.kt")
+  public void testPerson() {
+    runTest("compiler-plugin/src/test/data/diagnostic/Person.kt");
+  }
 }

@@ -22,12 +22,6 @@ public class BoxTestGenerated extends AbstractBoxTest {
   }
 
   @Test
-  @TestMetadata("Holder.kt")
-  public void testHolder() {
-    runTest("compiler-plugin/src/test/data/box/Holder.kt");
-  }
-
-  @Test
   @TestMetadata("Person.kt")
   public void testPerson() {
     runTest("compiler-plugin/src/test/data/box/Person.kt");
