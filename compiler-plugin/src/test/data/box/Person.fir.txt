@@ -1,8 +1,14 @@
 FILE: Person.kt
     public final fun box(): R|kotlin/String| {
+        lval person: R|Person| = Q|Person|.R|/Person.Builder|().R|kotlin/apply|<R|Person.Builder|>(<L> = apply@fun R|Person.Builder|.<anonymous>(): R|kotlin/Unit| <inline=Inline, kind=EXACTLY_ONCE>  {
+            this@R|special/anonymous|.R|/Person.Builder.name| = String(Brian)
+            this@R|special/anonymous|.R|/Person.Builder.age| = Int(-1)
+        }
+        ).R|/Person.Builder.build|()
+        R|kotlin/test/assertEquals|<R|Person|>(R|<local>/person|, R|/Person.Person|(String(Brian), String(Brian), Int(-1)))
         ^box String(OK)
     }
-    public final class Person : R|kotlin/Any| {
+    public final data class Person : R|kotlin/Any| {
         @R|dev/bnorm/buildable/Buildable|() public constructor(name: R|kotlin/String|, nickname: R|kotlin/String?| = R|<local>/name|, age: R|kotlin/Int| = Int(0)): R|Person| {
             super<R|kotlin/Any|>()
         }
@@ -15,6 +21,14 @@ FILE: Person.kt
 
         public final val age: R|kotlin/Int| = R|<local>/age|
             public get(): R|kotlin/Int|
+
+        public final operator fun component1(): R|kotlin/String|
+
+        public final operator fun component2(): R|kotlin/String?|
+
+        public final operator fun component3(): R|kotlin/Int|
+
+        public final fun copy(name: R|kotlin/String| = this@R|/Person|.R|/Person.name|, nickname: R|kotlin/String?| = this@R|/Person|.R|/Person.nickname|, age: R|kotlin/Int| = this@R|/Person|.R|/Person.age|): R|Person|
 
         public final class Builder : R|kotlin/Any| {
             public final var name: R|kotlin/String|

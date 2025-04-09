@@ -1,7 +1,5 @@
 import dev.bnorm.buildable.Buildable
 
-fun box() = "OK"
-
 class Person <!BUILDABLE_MULTIPLE_CONSTRUCTORS!>@Buildable<!> constructor(
   val name: String,
   val nickname: String? = name,

@@ -1,10 +1,10 @@
 package dev.bnorm.buildable.plugin.fir
 
 import dev.bnorm.buildable.plugin.BuildableKey
-import dev.bnorm.buildable.plugin.BuildableNames
+import dev.bnorm.buildable.plugin.BuilderClassKey
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
+import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.extensions.predicate.LookupPredicate
@@ -12,11 +12,12 @@ import org.jetbrains.kotlin.fir.plugin.createConstructor
 import org.jetbrains.kotlin.fir.plugin.createMemberFunction
 import org.jetbrains.kotlin.fir.plugin.createMemberProperty
 import org.jetbrains.kotlin.fir.plugin.createNestedClass
-import org.jetbrains.kotlin.fir.resolve.providers.getRegularClassSymbolByClassId
+import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
+import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.constructType
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 
@@ -25,38 +26,28 @@ class BuildableFirDeclarationGenerationExtension(
   session: FirSession,
 ) : FirDeclarationGenerationExtension(session) {
   companion object {
-    //@sample-start:ANNOTATION_PREDICATE
-    private val ANNOTATION_PREDICATE: LookupPredicate =
-      LookupPredicate.BuilderContext.annotated(BuildableNames.BUILDABLE_FQ_NAME)
+    //@sample-start:NAMES
+    val BUILDER_CLASS_NAME = Name.identifier("Builder")
+    val BUILD_FUN_NAME = Name.identifier("build")
+    //@sample-end
+
+    //@sample-start:BUILDABLE_PREDICATE
+    private val BUILDABLE_PREDICATE = LookupPredicate.create {
+      annotated(FqName("dev.bnorm.buildable.Buildable"))
+    }
+    //@sample-end
+
+    //@sample-start:HAS_BUILDABLE_PREDICATE
+    private val HAS_BUILDABLE_PREDICATE = LookupPredicate.create {
+      hasAnnotated(FqName("dev.bnorm.buildable.Buildable"))
+    }
     //@sample-end
   }
 
   //@sample-start:registerPredicates
   override fun FirDeclarationPredicateRegistrar.registerPredicates() {
-    register(ANNOTATION_PREDICATE)
-  }
-  //@sample-end
-
-  //@sample-start:classIds
-  private val classIds: Map<ClassId, FirConstructorSymbol> by lazy {
-    session.predicateBasedProvider
-      .getSymbolsByPredicate(ANNOTATION_PREDICATE)
-      .filterIsInstance<FirConstructorSymbol>()
-      .map { constructorSymbol ->
-        val classSymbol = constructorSymbol.getContainingClassSymbol()!!
-        classSymbol.classId to constructorSymbol
-      }
-      .groupBy({ it.first }, { it.second })
-      .filterValues { it.size == 1 }
-      .mapValues { it.value.single() }
-  }
-  //@sample-end
-
-  //@sample-start:builderClassIds
-  private val builderClassIds: Map<ClassId, FirConstructorSymbol> by lazy {
-    classIds.mapKeys { (key, _) ->
-      key.createNestedClassId(BuildableNames.BUILDER_CLASS_NAME)
-    }
+    register(BUILDABLE_PREDICATE)
+    register(HAS_BUILDABLE_PREDICATE)
   }
   //@sample-end
 
@@ -65,11 +56,11 @@ class BuildableFirDeclarationGenerationExtension(
     classSymbol: FirClassSymbol<*>,
     context: NestedClassGenerationContext,
   ): Set<Name> {
-    if (classSymbol.classId !in classIds) return emptySet()
+    val provider = session.predicateBasedProvider
+    if (!provider.matches(HAS_BUILDABLE_PREDICATE, classSymbol))
+      return emptySet()
 
-    return setOf(
-      BuildableNames.BUILDER_CLASS_NAME,
-    )
+    return setOf(BUILDER_CLASS_NAME)
   }
   //@sample-end
 
@@ -79,13 +70,19 @@ class BuildableFirDeclarationGenerationExtension(
     name: Name,
     context: NestedClassGenerationContext,
   ): FirClassLikeSymbol<*>? {
-    if (name != BuildableNames.BUILDER_CLASS_NAME) return null
-    val constructorSymbol = classIds[owner.classId] ?: return null
+    if (name != BUILDER_CLASS_NAME) return null
+
+    // ??? TODO should we be using owner.declarationSymbols instead?
+    val scope = owner.declaredMemberScope(session, memberRequiredPhase = null)
+    val provider = session.predicateBasedProvider
+    val constructorSymbol = scope.getDeclaredConstructors()
+      .singleOrNull { provider.matches(BUILDABLE_PREDICATE, it) }
+      ?: return null
 
     val builderClass = createNestedClass(
       owner = owner,
-      name = BuildableNames.BUILDER_CLASS_NAME,
-      key = BuildableKey
+      name = BUILDER_CLASS_NAME,
+      key = BuilderClassKey(owner, constructorSymbol),
     ) {
       visibility = constructorSymbol.visibility
         .takeIf { it != Visibilities.Unknown }
@@ -101,13 +98,13 @@ class BuildableFirDeclarationGenerationExtension(
     classSymbol: FirClassSymbol<*>,
     context: MemberGenerationContext,
   ): Set<Name> {
-    val constructorSymbol = builderClassIds[classSymbol.classId]
-      ?: return emptySet()
+    val key = (classSymbol.origin as? FirDeclarationOrigin.Plugin)?.key
+    if (key !is BuilderClassKey) return emptySet()
 
     return buildSet {
       add(SpecialNames.INIT)
-      addAll(constructorSymbol.valueParameterSymbols.map { it.name })
-      add(BuildableNames.BUILD_FUN_NAME)
+      addAll(key.constructorSymbol.valueParameterSymbols.map { it.name })
+      add(BUILD_FUN_NAME)
     }
   }
   //@sample-end
@@ -116,11 +113,16 @@ class BuildableFirDeclarationGenerationExtension(
   override fun generateConstructors(
     context: MemberGenerationContext,
   ): List<FirConstructorSymbol> {
-    val builderSymbol = context.owner
-    if (builderSymbol.classId !in builderClassIds) return emptyList()
+    val builderClassSymbol = context.owner
+    val key = (builderClassSymbol.origin as? FirDeclarationOrigin.Plugin)?.key
+    if (key !is BuilderClassKey) return emptyList()
 
-    val constructor =
-      createConstructor(builderSymbol, BuildableKey, isPrimary = true)
+    val constructor = createConstructor(
+      owner = builderClassSymbol,
+      key = BuildableKey,
+      isPrimary = true,
+    )
+
     return listOf(constructor.symbol)
   }
   //@sample-end
@@ -130,16 +132,16 @@ class BuildableFirDeclarationGenerationExtension(
     callableId: CallableId,
     context: MemberGenerationContext?,
   ): List<FirPropertySymbol> {
-    val classSymbol = context?.owner ?: return emptyList()
-    val constructorSymbol = builderClassIds[classSymbol.classId]
-      ?: return emptyList()
+    val builderClassSymbol = context?.owner
+    val key = (builderClassSymbol?.origin as? FirDeclarationOrigin.Plugin)?.key
+    if (key !is BuilderClassKey) return emptyList()
 
-    val parameterSymbol = constructorSymbol.valueParameterSymbols
+    val parameterSymbol = key.constructorSymbol.valueParameterSymbols
       .singleOrNull { it.name == callableId.callableName }
       ?: return emptyList()
 
     val property = createMemberProperty(
-      owner = classSymbol,
+      owner = builderClassSymbol,
       key = BuildableKey,
       name = parameterSymbol.name,
       returnType = parameterSymbol.resolvedReturnType,
@@ -156,20 +158,18 @@ class BuildableFirDeclarationGenerationExtension(
     callableId: CallableId,
     context: MemberGenerationContext?,
   ): List<FirNamedFunctionSymbol> {
-    if (callableId.callableName != BuildableNames.BUILD_FUN_NAME)
+    if (callableId.callableName != BUILD_FUN_NAME)
       return emptyList()
 
-    val builderSymbol = context?.owner ?: return emptyList()
-    if (builderSymbol.classId !in builderClassIds) return emptyList()
+    val builderClassSymbol = context?.owner
+    val key = (builderClassSymbol?.origin as? FirDeclarationOrigin.Plugin)?.key
+    if (key !is BuilderClassKey) return emptyList()
 
-    val buildableClassId = builderSymbol.classId.outerClassId!!
-    val buildableSymbol =
-      session.getRegularClassSymbolByClassId(buildableClassId)!!
     val build = createMemberFunction(
-      owner = builderSymbol,
+      owner = builderClassSymbol,
       key = BuildableKey,
       name = callableId.callableName,
-      returnType = buildableSymbol.constructType(),
+      returnType = key.ownerClassSymbol.constructType(),
     )
 
     return listOf(build.symbol)

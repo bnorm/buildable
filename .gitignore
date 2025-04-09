@@ -5,7 +5,9 @@ build/
 !**/src/test/**/build/
 
 ### IntelliJ IDEA ###
-.idea
+.idea/*
+!.idea/externalDependencies.xml
+!.idea/kotlinTestDataPluginTestDataPaths.xml
 *.iws
 *.iml
 *.ipr

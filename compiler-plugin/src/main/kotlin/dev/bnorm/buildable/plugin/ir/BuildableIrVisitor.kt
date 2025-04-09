@@ -1,6 +1,7 @@
 package dev.bnorm.buildable.plugin.ir
 
 import dev.bnorm.buildable.plugin.BuildableKey
+import dev.bnorm.buildable.plugin.BuilderClassKey
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irThrow
@@ -78,15 +79,22 @@ class BuildableIrVisitor(
 
   //@sample-start:visitClass
   override fun visitClass(declaration: IrClass) {
-    if (declaration.origin == BUILDABLE_ORIGIN) {
+    val pluginKey = (declaration.origin as? GeneratedByPlugin)?.pluginKey
+    if (pluginKey is BuilderClassKey) {
       val declarations = declaration.declarations
 
-      val builderPropertyDeclarations = declarations
-        .filterIsInstance<IrProperty>()
-        .map { generateBacking(declaration, it) }
-        .flatMap { listOf(it.flag, it.holder) }
+      val fields = mutableListOf<IrField>()
+      for (property in declarations) {
+        if (property !is IrProperty) continue
+        val backing = generateBacking(declaration, property)
+        irPropertyAccessors(property, backing)
 
-      declarations.addAll(0, builderPropertyDeclarations)
+        property.builderPropertyBacking = backing
+        fields += backing.flag
+        fields += backing.holder
+      }
+
+      declarations.addAll(0, fields)
     }
 
     declaration.acceptChildrenVoid(this)
@@ -166,13 +174,26 @@ class BuildableIrVisitor(
       )
     }
 
+    return BuilderPropertyBacking(holderField, flagField)
+  }
+  //@sample-end
+
+  //@sample-start:irPropertyAccessors
+  private fun irPropertyAccessors(
+    property: IrProperty,
+    backing: BuilderPropertyBacking,
+  ) {
+    val getter = property.getter!!
+    val setter = property.setter!!
+    property.backingField = null
+
     getter.origin = BUILDABLE_ORIGIN
     getter.body = DeclarationIrBuilder(context, getter.symbol).irBlockBody {
       val dispatch = getter.dispatchReceiverParameter!!
       +irIfThenElse(
         type = getter.returnType,
-        condition = irGetField(irGet(dispatch), flagField),
-        thenPart = irReturn(irGetField(irGet(dispatch), holderField)),
+        condition = irGetField(irGet(dispatch), backing.flag),
+        thenPart = irReturn(irGetField(irGet(dispatch), backing.holder)),
         elsePart = irThrow(irUninitializedProperty(property))
       )
     }
@@ -182,19 +203,15 @@ class BuildableIrVisitor(
       val dispatch = setter.dispatchReceiverParameter!!
       +irSetField(
         receiver = irGet(dispatch),
-        field = holderField,
+        field = backing.holder,
         value = irGet(setter.valueParameters[0])
       )
       +irSetField(
         receiver = irGet(dispatch),
-        field = flagField,
+        field = backing.flag,
         value = true.toIrConst(context.irBuiltIns.booleanType)
       )
     }
-
-    val builderPropertyBacking = BuilderPropertyBacking(holderField, flagField)
-    property.builderPropertyBacking = builderPropertyBacking
-    return builderPropertyBacking
   }
   //@sample-end
 
