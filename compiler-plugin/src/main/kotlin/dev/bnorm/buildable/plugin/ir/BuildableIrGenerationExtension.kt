@@ -11,13 +11,8 @@ class BuildableIrGenerationExtension : IrGenerationExtension {
     moduleFragment: IrModuleFragment,
     pluginContext: IrPluginContext,
   ) {
-    val transformers = listOf(
-      BuildableIrVisitor(pluginContext),
-    )
-
-    for (transformer in transformers) {
-      moduleFragment.acceptChildrenVoid(transformer)
-    }
+    val visitor = BuildableIrVisitor(pluginContext)
+    moduleFragment.acceptChildrenVoid(visitor)
   }
 }
 //@sample-end

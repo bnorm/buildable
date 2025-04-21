@@ -1,3 +1,5 @@
+@file:OptIn(UnsafeDuringIrConstructionAPI::class)
+
 package dev.bnorm.buildable.plugin.ir
 
 import dev.bnorm.buildable.plugin.BuildableKey
@@ -30,11 +32,9 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 //@sample-start:BuildableIrVisitor
-@OptIn(UnsafeDuringIrConstructionAPI::class)
 class BuildableIrVisitor(
   private val context: IrPluginContext,
 ) : IrVisitorVoid() {
-  //@sample-start:companion
   companion object {
     private val BUILDABLE_ORIGIN = GeneratedByPlugin(BuildableKey)
 
@@ -43,9 +43,7 @@ class BuildableIrVisitor(
     private val ILLEGAL_STATE_EXCEPTION_CLASS_ID =
       ClassId.topLevel(ILLEGAL_STATE_EXCEPTION_FQ_NAME)
   }
-  //@sample-end
 
-  //@sample-start:properties
   private val nullableStringType = context.irBuiltIns.stringType.makeNullable()
   private val illegalStateExceptionConstructor =
     context.referenceConstructors(ILLEGAL_STATE_EXCEPTION_CLASS_ID)
@@ -54,9 +52,17 @@ class BuildableIrVisitor(
           ?: return@single false
         parameter.type == nullableStringType
       }
-  //@sample-end
 
-  //@sample-start:visitElement
+  private fun IrBuilderWithScope.irUninitializedProperty(
+    property: IrDeclarationWithName,
+  ): IrConstructorCall {
+    return irCall(illegalStateExceptionConstructor).apply {
+      putValueArgument(
+        0, irString("Uninitialized property '${property.name}'.")
+      )
+    }
+  }
+
   override fun visitElement(element: IrElement) {
     when (element) {
       is IrDeclaration,
@@ -67,49 +73,13 @@ class BuildableIrVisitor(
       else -> Unit
     }
   }
-  //@sample-end
 
-  //@sample-start:visitConstructor
   override fun visitConstructor(declaration: IrConstructor) {
     if (declaration.origin == BUILDABLE_ORIGIN && declaration.body == null) {
       declaration.body = generateDefaultConstructor(declaration)
     }
   }
-  //@sample-end
 
-  //@sample-start:visitClass
-  override fun visitClass(declaration: IrClass) {
-    val pluginKey = (declaration.origin as? GeneratedByPlugin)?.pluginKey
-    if (pluginKey is BuilderClassKey) {
-      val declarations = declaration.declarations
-
-      val fields = mutableListOf<IrField>()
-      for (property in declarations) {
-        if (property !is IrProperty) continue
-        val backing = generateBacking(declaration, property)
-        irPropertyAccessors(property, backing)
-
-        property.builderPropertyBacking = backing
-        fields += backing.flag
-        fields += backing.holder
-      }
-
-      declarations.addAll(0, fields)
-    }
-
-    declaration.acceptChildrenVoid(this)
-  }
-  //@sample-end
-
-  //@sample-start:visitSimpleFunction
-  override fun visitSimpleFunction(declaration: IrSimpleFunction) {
-    if (declaration.origin == BUILDABLE_ORIGIN && declaration.body == null) {
-      declaration.body = generateBuildFunction(declaration)
-    }
-  }
-  //@sample-end
-
-  //@sample-start:generateDefaultConstructor
   private fun generateDefaultConstructor(declaration: IrConstructor): IrBody? {
     val parentClass = declaration.parent as? IrClass ?: return null
     val anyConstructor = context.irBuiltIns.anyClass.owner.primaryConstructor
@@ -125,15 +95,34 @@ class BuildableIrVisitor(
       )
     }
   }
-  //@sample-end
 
-  //@sample-start:generateBacking
+  override fun visitClass(declaration: IrClass) {
+    val pluginKey = (declaration.origin as? GeneratedByPlugin)?.pluginKey
+    if (pluginKey is BuilderClassKey) {
+      val declarations = declaration.declarations
+
+      val fields = mutableListOf<IrField>()
+      for (property in declarations) {
+        if (property !is IrProperty) continue
+        val backing = generateBacking(declaration, property)
+        updatePropertyAccessors(property, backing)
+
+        property.builderPropertyBacking = backing
+        fields += backing.flag
+        fields += backing.holder
+      }
+
+      declarations.addAll(0, fields)
+    }
+
+    declaration.acceptChildrenVoid(this)
+  }
+
   private fun generateBacking(
     klass: IrClass,
     property: IrProperty,
   ): BuilderPropertyBacking {
     val getter = property.getter!!
-    val setter = property.setter!!
     property.backingField = null
 
     val isPrimitive = getter.returnType.isPrimitiveType()
@@ -176,10 +165,8 @@ class BuildableIrVisitor(
 
     return BuilderPropertyBacking(holderField, flagField)
   }
-  //@sample-end
 
-  //@sample-start:irPropertyAccessors
-  private fun irPropertyAccessors(
+  private fun updatePropertyAccessors(
     property: IrProperty,
     backing: BuilderPropertyBacking,
   ) {
@@ -213,9 +200,13 @@ class BuildableIrVisitor(
       )
     }
   }
-  //@sample-end
 
-  //@sample-start:generateBuildFunction
+  override fun visitSimpleFunction(declaration: IrSimpleFunction) {
+    if (declaration.origin == BUILDABLE_ORIGIN && declaration.body == null) {
+      declaration.body = generateBuildFunction(declaration)
+    }
+  }
+
   private fun generateBuildFunction(function: IrSimpleFunction): IrBody? {
     val builderClass = function.parent
       as? IrClass ?: return null
@@ -226,7 +217,7 @@ class BuildableIrVisitor(
 
     val irBuilder = DeclarationIrBuilder(context, function.symbol)
     return irBuilder.irBlockBody {
-      val arguments = irConstructorArguments(
+      val arguments = generateConstructorArguments(
         constructorParameters = primaryConstructor.valueParameters,
         builderProperties = builderClass.declarations.filterIsInstance<IrProperty>(),
         dispatchReceiverParameter = function.dispatchReceiverParameter!!
@@ -241,10 +232,8 @@ class BuildableIrVisitor(
       +irReturn(constructorCall)
     }
   }
-  //@sample-end
 
-  //@sample-start:irConstructorArguments
-  private fun IrBlockBodyBuilder.irConstructorArguments(
+  private fun IrBlockBodyBuilder.generateConstructorArguments(
     constructorParameters: List<IrValueParameter>,
     builderProperties: List<IrProperty>,
     dispatchReceiverParameter: IrValueParameter,
@@ -300,18 +289,5 @@ class BuildableIrVisitor(
 
     return variables
   }
-  //@sample-end
-
-  //@sample-start:irUninitializedProperty
-  private fun IrBuilderWithScope.irUninitializedProperty(
-    property: IrDeclarationWithName,
-  ): IrConstructorCall {
-    return irCall(illegalStateExceptionConstructor).apply {
-      putValueArgument(
-        0, irString("Uninitialized property '${property.name}'.")
-      )
-    }
-  }
-  //@sample-end
 }
 //@sample-end

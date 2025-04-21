@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.plugin.createConstructor
 import org.jetbrains.kotlin.fir.plugin.createMemberFunction
 import org.jetbrains.kotlin.fir.plugin.createMemberProperty
 import org.jetbrains.kotlin.fir.plugin.createNestedClass
+import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -26,32 +27,23 @@ class BuildableFirDeclarationGenerationExtension(
   session: FirSession,
 ) : FirDeclarationGenerationExtension(session) {
   companion object {
-    //@sample-start:NAMES
     val BUILDER_CLASS_NAME = Name.identifier("Builder")
     val BUILD_FUN_NAME = Name.identifier("build")
-    //@sample-end
 
-    //@sample-start:BUILDABLE_PREDICATE
     private val BUILDABLE_PREDICATE = LookupPredicate.create {
       annotated(FqName("dev.bnorm.buildable.Buildable"))
     }
-    //@sample-end
 
-    //@sample-start:HAS_BUILDABLE_PREDICATE
     private val HAS_BUILDABLE_PREDICATE = LookupPredicate.create {
       hasAnnotated(FqName("dev.bnorm.buildable.Buildable"))
     }
-    //@sample-end
   }
 
-  //@sample-start:registerPredicates
   override fun FirDeclarationPredicateRegistrar.registerPredicates() {
     register(BUILDABLE_PREDICATE)
     register(HAS_BUILDABLE_PREDICATE)
   }
-  //@sample-end
 
-  //@sample-start:getNestedClassifiersNames
   override fun getNestedClassifiersNames(
     classSymbol: FirClassSymbol<*>,
     context: NestedClassGenerationContext,
@@ -62,9 +54,7 @@ class BuildableFirDeclarationGenerationExtension(
 
     return setOf(BUILDER_CLASS_NAME)
   }
-  //@sample-end
 
-  //@sample-start:generateNestedClassLikeDeclaration
   override fun generateNestedClassLikeDeclaration(
     owner: FirClassSymbol<*>,
     name: Name,
@@ -73,7 +63,8 @@ class BuildableFirDeclarationGenerationExtension(
     if (name != BUILDER_CLASS_NAME) return null
 
     // ??? TODO should we be using owner.declarationSymbols instead?
-    val scope = owner.declaredMemberScope(session, memberRequiredPhase = null)
+    val scope: FirScope =
+      owner.declaredMemberScope(session, memberRequiredPhase = null)
     val provider = session.predicateBasedProvider
     val constructorSymbol = scope.getDeclaredConstructors()
       .singleOrNull { provider.matches(BUILDABLE_PREDICATE, it) }
@@ -91,9 +82,7 @@ class BuildableFirDeclarationGenerationExtension(
 
     return builderClass.symbol
   }
-  //@sample-end
 
-  //@sample-start:getCallableNamesForClass
   override fun getCallableNamesForClass(
     classSymbol: FirClassSymbol<*>,
     context: MemberGenerationContext,
@@ -107,9 +96,7 @@ class BuildableFirDeclarationGenerationExtension(
       add(BUILD_FUN_NAME)
     }
   }
-  //@sample-end
 
-  //@sample-start:generateConstructors
   override fun generateConstructors(
     context: MemberGenerationContext,
   ): List<FirConstructorSymbol> {
@@ -125,9 +112,7 @@ class BuildableFirDeclarationGenerationExtension(
 
     return listOf(constructor.symbol)
   }
-  //@sample-end
 
-  //@sample-start:generateProperties
   override fun generateProperties(
     callableId: CallableId,
     context: MemberGenerationContext?,
@@ -151,9 +136,7 @@ class BuildableFirDeclarationGenerationExtension(
 
     return listOf(property.symbol)
   }
-  //@sample-end
 
-  //@sample-start:generateFunctions
   override fun generateFunctions(
     callableId: CallableId,
     context: MemberGenerationContext?,
@@ -174,6 +157,5 @@ class BuildableFirDeclarationGenerationExtension(
 
     return listOf(build.symbol)
   }
-  //@sample-end
 }
 //@sample-end
