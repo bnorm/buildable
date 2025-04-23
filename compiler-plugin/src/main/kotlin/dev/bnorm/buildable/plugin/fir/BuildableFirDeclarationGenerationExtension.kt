@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.extensions.*
-import org.jetbrains.kotlin.fir.extensions.predicate.LookupPredicate
+import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
 import org.jetbrains.kotlin.fir.plugin.createConstructor
 import org.jetbrains.kotlin.fir.plugin.createMemberFunction
 import org.jetbrains.kotlin.fir.plugin.createMemberProperty
@@ -30,11 +30,11 @@ class BuildableFirDeclarationGenerationExtension(
     val BUILDER_CLASS_NAME = Name.identifier("Builder")
     val BUILD_FUN_NAME = Name.identifier("build")
 
-    private val BUILDABLE_PREDICATE = LookupPredicate.create {
+    private val BUILDABLE_PREDICATE = DeclarationPredicate.create {
       annotated(FqName("dev.bnorm.buildable.Buildable"))
     }
 
-    private val HAS_BUILDABLE_PREDICATE = LookupPredicate.create {
+    private val HAS_BUILDABLE_PREDICATE = DeclarationPredicate.create {
       hasAnnotated(FqName("dev.bnorm.buildable.Buildable"))
     }
   }
