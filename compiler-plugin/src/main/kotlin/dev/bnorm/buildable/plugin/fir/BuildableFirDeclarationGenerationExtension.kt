@@ -62,7 +62,6 @@ class BuildableFirDeclarationGenerationExtension(
   ): FirClassLikeSymbol<*>? {
     if (name != BUILDER_CLASS_NAME) return null
 
-    // ??? TODO should we be using owner.declarationSymbols instead?
     val scope: FirScope =
       owner.declaredMemberScope(session, memberRequiredPhase = null)
     val provider = session.predicateBasedProvider
