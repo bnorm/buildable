@@ -3,7 +3,7 @@
     <component name="TestDataPluginSettings">
         <option name="testDataFiles">
             <array>
-                <option value="$PROJECT_DIR$/compiler-plugin/src/test/data"/>
+                <option value="$PROJECT_DIR$/compiler-plugin/testData"/>
             </array>
         </option>
     </component>
