@@ -4,7 +4,7 @@ import dev.bnorm.buildable.Buildable
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 
-val LOTR_BUILDER = listOf(
+val LOTR_BOOKS = listOf(
   Book.Builder().apply {
     title = "The Fellowship of the Ring"
     series = "The Lord of the Rings"
