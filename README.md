@@ -2,6 +2,9 @@
 
 Example Kotlin compiler plugin built for the KotlinConf 2025 talk: Writing Your Third Kotlin Compiler Plugin.
 
+- [Slides](https://deck.bnorm.dev/kc25/)
+- Recording *(Coming Soon!)*
+
 ## Resources
 
 ### Previous
