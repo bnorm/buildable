@@ -8,7 +8,7 @@ pluginManagement {
     }
 
     plugins {
-        val kotlinVersion = "2.1.20-RC2"
+        val kotlinVersion = "2.1.21"
 
         kotlin("multiplatform") version kotlinVersion
         kotlin("jvm") version kotlinVersion
