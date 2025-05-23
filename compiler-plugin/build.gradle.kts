@@ -4,9 +4,12 @@ plugins {
 }
 
 kotlin {
-  compilerOptions {
-    optIn.add("org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi")
-    optIn.add("org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI")
+  sourceSets.all {
+    languageSettings {
+      enableLanguageFeature("ContextParameters")
+      optIn("org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi")
+      optIn("org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI")
+    }
   }
 }
 

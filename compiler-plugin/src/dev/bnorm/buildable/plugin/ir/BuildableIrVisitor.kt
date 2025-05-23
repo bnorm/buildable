@@ -48,7 +48,7 @@ class BuildableIrVisitor(
   private val illegalStateExceptionConstructor =
     context.referenceConstructors(ILLEGAL_STATE_EXCEPTION_CLASS_ID)
       .single { constructor ->
-        val parameter = constructor.owner.valueParameters.singleOrNull()
+        val parameter = constructor.owner.parameters.singleOrNull()
           ?: return@single false
         parameter.type == nullableStringType
       }
@@ -57,9 +57,10 @@ class BuildableIrVisitor(
     property: IrDeclarationWithName,
   ): IrConstructorCall {
     return irCall(illegalStateExceptionConstructor).apply {
-      putValueArgument(
-        0, irString("Uninitialized property '${property.name}'.")
-      )
+      val parameter =
+        illegalStateExceptionConstructor.owner.parameters.single { it.kind == IrParameterKind.Regular }
+      arguments[parameter] =
+        irString("Uninitialized property '${property.name}'.")
     }
   }
 
@@ -191,7 +192,7 @@ class BuildableIrVisitor(
       +irSetField(
         receiver = irGet(dispatch),
         field = backing.holder,
-        value = irGet(setter.valueParameters[0])
+        value = irGet(setter.parameters.first { it.kind == IrParameterKind.Regular })
       )
       +irSetField(
         receiver = irGet(dispatch),
@@ -218,15 +219,15 @@ class BuildableIrVisitor(
     val irBuilder = DeclarationIrBuilder(context, function.symbol)
     return irBuilder.irBlockBody {
       val arguments = generateConstructorArguments(
-        constructorParameters = primaryConstructor.valueParameters,
+        constructorParameters = primaryConstructor.parameters,
         builderProperties = builderClass.declarations.filterIsInstance<IrProperty>(),
         dispatchReceiverParameter = function.dispatchReceiverParameter!!
       )
 
-      val constructorCall = irCall(primaryConstructor).apply {
-        arguments.forEachIndexed { index, variable ->
-          putValueArgument(index, irGet(variable))
-        }
+      val constructorCall = irCall(primaryConstructor)
+      arguments.forEachIndexed { index, argument ->
+        val parameter = primaryConstructor.parameters[index]
+        constructorCall.arguments[parameter] = irGet(argument)
       }
 
       +irReturn(constructorCall)
