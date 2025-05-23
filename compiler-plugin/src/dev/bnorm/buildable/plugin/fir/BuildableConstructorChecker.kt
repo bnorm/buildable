@@ -7,8 +7,6 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirClassChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.declaredMemberScope
 import org.jetbrains.kotlin.fir.declarations.FirClass
-import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.types.classId
 import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.name.ClassId
@@ -21,11 +19,8 @@ object BuildableConstructorChecker : FirClassChecker(MppCheckerKind.Common) {
     FqName("dev.bnorm.buildable.Buildable")
   )
 
-  override fun check(
-    declaration: FirClass,
-    context: CheckerContext,
-    reporter: DiagnosticReporter,
-  ) {
+  context(context: CheckerContext, reporter: DiagnosticReporter)
+  override fun check(declaration: FirClass) {
     val annotations = buildList {
       val scope = declaration.symbol.declaredMemberScope(context)
       scope.processDeclaredConstructors { constructor ->
@@ -42,7 +37,6 @@ object BuildableConstructorChecker : FirClassChecker(MppCheckerKind.Common) {
         reporter.reportOn(
           source = annotation.source,
           factory = BuildableErrors.BUILDABLE_MULTIPLE_CONSTRUCTORS,
-          context = context
         )
       }
     }
