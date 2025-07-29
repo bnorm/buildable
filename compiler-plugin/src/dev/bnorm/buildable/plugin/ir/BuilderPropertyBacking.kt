@@ -11,5 +11,5 @@ class BuilderPropertyBacking(
 )
 
 var IrProperty.builderPropertyBacking: BuilderPropertyBacking?
-  by irAttribute(followAttributeOwner = false)
+  by irAttribute(copyByDefault = false)
 //@sample-end
